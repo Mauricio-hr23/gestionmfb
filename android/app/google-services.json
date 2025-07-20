@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1030276016445",
+    "project_id": "gestionmfb-1fb87",
+    "storage_bucket": "gestionmfb-1fb87.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1030276016445:android:3ceb625ce10ab21e953d54",
+        "android_client_info": {
+          "package_name": "com.example.gestionmfb"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9UitOAd-UWjIdo0zIyCrWpa5fk-2z-4Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

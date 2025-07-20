@@ -1,0 +1,169 @@
+import 'package:flutter/material.dart';
+import 'package:gestion_mfb/pantallas/mapa/gestionar_marcas_mapa.dart';
+import 'package:gestion_mfb/pantallas/mapa/estadisticas_ubicaciones.dart';
+import 'package:gestion_mfb/pantallas/mapa/mapa_calor_pedidos.dart';
+import 'package:gestion_mfb/pantallas/mapa/analisis_geografico_pedidos.dart';
+import 'package:gestion_mfb/pantallas/mapa/analisis_cuadrantes_pedidos.dart';
+
+class AdminMenuPantalla extends StatelessWidget {
+  const AdminMenuPantalla({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Panel Administrador'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            tooltip: 'Cerrar sesión',
+            onPressed: () {
+              // Implementa el logout si quieres aquí
+              Navigator.pushReplacementNamed(context, '/login');
+            },
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: GridView.count(
+          crossAxisCount: 1,
+          childAspectRatio: 2.5,
+          mainAxisSpacing: 28,
+          children: [
+            _AdminMenuCard(
+              color: Colors.blue.shade700,
+              icon: Icons.people,
+              title: 'Gestión de Usuarios',
+              onTap: () => Navigator.pushNamed(context, '/lista_usuarios'),
+            ),
+            _AdminMenuCard(
+              color: Colors.green.shade700,
+              icon: Icons.local_shipping,
+              title: 'Gestión de Vehículos',
+              onTap: () => Navigator.pushNamed(context, '/vehiculos'),
+            ),
+            _AdminMenuCard(
+              color: Colors.orange.shade700,
+              icon: Icons.person,
+              title: 'Gestión de Choferes',
+              onTap: () => Navigator.pushNamed(context, '/choferes'),
+            ),
+            // ---------- NUEVO: Acceso a crear pedido ----------
+            _AdminMenuCard(
+              color: Colors.purple.shade700,
+              icon: Icons.add_box_outlined,
+              title: 'Crear Pedido',
+              onTap: () => Navigator.pushNamed(context, '/crear-pedido'),
+            ),
+            _AdminMenuCard(
+              color: Colors.teal.shade700,
+              icon: Icons.list_alt_rounded,
+              title: 'Lista de Pedidos',
+              onTap: () => Navigator.pushNamed(context, '/lista-pedidos'),
+            ),
+            _AdminMenuCard(
+              color: Colors.purple.shade700,
+              icon: Icons.edit_location_alt,
+              title: 'Editar/Eliminar ubicaciones',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => GestionarMarcasMapaPantalla(),
+                ),
+              ),
+            ),
+            _AdminMenuCard(
+              color: Colors.deepPurple.shade700,
+              icon: Icons.local_fire_department,
+              title: 'Mapa de calor de pedidos',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => MapaCalorPedidosPantalla()),
+                );
+              },
+            ),
+
+            _AdminMenuCard(
+              color: Colors.indigo.shade700,
+              icon: Icons.analytics,
+              title: 'Análisis geográfico',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AnalisisGeograficoPedidosPantalla(),
+                ),
+              ),
+            ),
+            _AdminMenuCard(
+              color: Colors.green.shade800,
+              icon: Icons.grid_on,
+              title: 'Análisis por cuadrantes',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AnalisisCuadrantesPedidosPantalla(),
+                ),
+              ),
+            ),
+
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EstadisticasUbicacionesPantalla(),
+                  ),
+                );
+              },
+              child: Text("Ver Estadísticas de Ubicaciones"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdminMenuCard extends StatelessWidget {
+  final Color color;
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  const _AdminMenuCard({
+    required this.color,
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 6,
+      color: color,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: onTap,
+        child: Center(
+          child: ListTile(
+            leading: Icon(icon, color: Colors.white, size: 38),
+            title: Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+            trailing: Icon(Icons.arrow_forward_ios, color: Colors.white70),
+          ),
+        ),
+      ),
+    );
+  }
+}
