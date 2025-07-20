@@ -28,6 +28,8 @@ dependencies:
   flutter_map: ^7.0.2
   latlong2: ^0.9.0
   geolocator: ^11.0.0
+  #ubicaion en segundo plano
+  background_locator_2: ^2.0.0
   #grafico de barras
   fl_chart: ^0.66.0
   #Mapa de calor
