@@ -16,9 +16,13 @@ class ChoferesServicio {
                 (doc) => {
                   'id': doc.id,
                   'nombre': doc['nombre'],
-                  'ubicacion': doc['ubicacion'], // GeoPoint
-                  'foto': doc['foto'],
-                  // Agrega más datos si quieres
+                  'ubicacion': doc['ubicacion'],
+                  'foto_url': doc.data().containsKey('foto_url')
+                      ? doc['foto_url']
+                      : null,
+                  'telefono': doc.data().containsKey('telefono')
+                      ? doc['telefono']
+                      : null,
                 },
               )
               .toList(),

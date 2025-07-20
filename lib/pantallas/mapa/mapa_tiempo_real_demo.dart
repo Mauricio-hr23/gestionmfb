@@ -4,11 +4,9 @@ import 'package:latlong2/latlong.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
-import 'dart:math';
 
 // --- Servicio de Localización (solo mientras la app está en uso)
 class LocalizacionServicio {
-  // Actualiza la ubicación del chofer cada vez que se mueve
   StreamSubscription<Position>? _subs;
   void iniciarActualizacionContinua(String userId) {
     _subs?.cancel();
@@ -47,9 +45,8 @@ class ChoferesServicio {
                   'id': doc.id,
                   'nombre': doc['nombre'],
                   'ubicacion': doc['ubicacion'],
-                  'foto': doc['foto'],
+                  'foto_url': doc['foto_url'],
                   'telefono': doc['telefono'],
-                  // otros campos...
                 },
               )
               .toList(),
@@ -218,6 +215,10 @@ class _MapaTiempoRealDemoState extends State<MapaTiempoRealDemo> {
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _choferesServicio.obtenerChoferesConUbicacion(),
         builder: (context, snapshot) {
+          // --- NUEVO: manejo de errores en el stream
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
           if (!snapshot.hasData) {
             return Center(child: CircularProgressIndicator());
           }
@@ -225,7 +226,6 @@ class _MapaTiempoRealDemoState extends State<MapaTiempoRealDemo> {
           if (choferes.isEmpty) {
             return Center(child: Text('No hay choferes activos en el mapa.'));
           }
-
           // Centrar en el usuario actual o primer chofer
           final self = choferes.firstWhere(
             (ch) => ch['id'] == widget.userId,
@@ -262,7 +262,7 @@ class _MapaTiempoRealDemoState extends State<MapaTiempoRealDemo> {
                     ),
                     child: MarcadorChoferWidget(
                       nombre: chofer['nombre'],
-                      fotoUrl: chofer['foto'],
+                      fotoUrl: chofer['foto_url'],
                       esActivo: chofer['id'] == widget.userId,
                       onTap: () {
                         showModalBottomSheet(
@@ -284,12 +284,12 @@ class _MapaTiempoRealDemoState extends State<MapaTiempoRealDemo> {
                                     fontSize: 18,
                                   ),
                                 ),
-                                if (chofer['foto'] != null)
+                                if (chofer['foto_url'] != null)
                                   Padding(
                                     padding: EdgeInsets.all(6),
                                     child: CircleAvatar(
                                       backgroundImage: NetworkImage(
-                                        chofer['foto'],
+                                        chofer['foto_url'],
                                       ),
                                       radius: 30,
                                     ),
@@ -311,4 +311,5 @@ class _MapaTiempoRealDemoState extends State<MapaTiempoRealDemo> {
       ),
     );
   }
+
 }
