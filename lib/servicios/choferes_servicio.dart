@@ -4,7 +4,6 @@ class ChoferesServicio {
   final _usuarios = FirebaseFirestore.instance.collection('usuarios');
 
   Stream<List<Map<String, dynamic>>> obtenerChoferesConUbicacion() {
-    // Solo choferes activos
     return _usuarios
         .where('rol', isEqualTo: 'chofer')
         .where('estado', isEqualTo: 'activo')
@@ -12,19 +11,20 @@ class ChoferesServicio {
         .map(
           (snapshot) => snapshot.docs
               .where((doc) => doc.data().containsKey('ubicacion'))
-              .map(
-                (doc) => {
+              .map((doc) {
+                final data = doc.data();
+                return {
                   'id': doc.id,
-                  'nombre': doc['nombre'],
-                  'ubicacion': doc['ubicacion'],
-                  'foto_url': doc.data().containsKey('foto_url')
-                      ? doc['foto_url']
+                  'nombre': data['nombre'],
+                  'ubicacion': data['ubicacion'],
+                  'foto_url': data.containsKey('foto_url')
+                      ? data['foto_url']
                       : null,
-                  'telefono': doc.data().containsKey('telefono')
-                      ? doc['telefono']
+                  'telefono': data.containsKey('telefono')
+                      ? data['telefono']
                       : null,
-                },
-              )
+                };
+              })
               .toList(),
         );
   }

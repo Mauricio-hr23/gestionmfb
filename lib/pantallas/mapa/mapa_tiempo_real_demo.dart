@@ -40,15 +40,20 @@ class ChoferesServicio {
         .map(
           (snapshot) => snapshot.docs
               .where((doc) => doc.data().containsKey('ubicacion'))
-              .map(
-                (doc) => {
+              .map((doc) {
+                final data = doc.data();
+                return {
                   'id': doc.id,
-                  'nombre': doc['nombre'],
-                  'ubicacion': doc['ubicacion'],
-                  'foto_url': doc['foto_url'],
-                  'telefono': doc['telefono'],
-                },
-              )
+                  'nombre': data['nombre'],
+                  'ubicacion': data['ubicacion'],
+                  'foto_url': data.containsKey('foto_url')
+                      ? data['foto_url']
+                      : null,
+                  'telefono': data.containsKey('telefono')
+                      ? data['telefono']
+                      : null,
+                };
+              })
               .toList(),
         );
   }
@@ -311,5 +316,4 @@ class _MapaTiempoRealDemoState extends State<MapaTiempoRealDemo> {
       ),
     );
   }
-
 }

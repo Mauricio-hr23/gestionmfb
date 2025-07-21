@@ -10,20 +10,28 @@ class EstadisticasUbicacionesPantalla extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text("Ranking de Ubicaciones más Usadas")),
       body: FutureBuilder<List<Map<String, dynamic>>>(
+        // Obtención de los datos
         future: RutaServicio().obtenerRankingMarcas(top: 7),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator());
+            return Center(
+              child: CircularProgressIndicator(),
+            ); // Muestra el cargando
           }
-          final data = snapshot.data!;
+          final data = snapshot.data!; // Datos obtenidos
           if (data.isEmpty) {
-            return Center(child: Text("Aún no hay datos de uso."));
+            return Center(
+              child: Text("Aún no hay datos de uso."),
+            ); // Si no hay datos
           }
 
           // Gráfico de barras
           final maxUsos = data
               .map((e) => e['usos'] as int)
-              .fold<int>(0, (prev, e) => e > prev ? e : prev);
+              .fold<int>(
+                0,
+                (prev, e) => e > prev ? e : prev,
+              ); // Encuentra el valor máximo de usos
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(18),
@@ -41,7 +49,7 @@ class EstadisticasUbicacionesPantalla extends StatelessWidget {
                           sideTitles: SideTitles(
                             showTitles: true,
                             reservedSize: 36,
-                            interval: 1,
+                            interval: 1, // Intervalo de las etiquetas del eje Y
                           ),
                         ),
                         bottomTitles: AxisTitles(
@@ -51,31 +59,35 @@ class EstadisticasUbicacionesPantalla extends StatelessWidget {
                               int i = value.toInt();
                               if (i >= 0 && i < data.length) {
                                 return SideTitleWidget(
-                                  axisSide: meta.axisSide,
+                                  meta:
+                                      meta, // Aquí es donde se pasa el parámetro meta
                                   child: Text(
                                     data[i]['nombre'].toString().length > 12
-                                        ? "${data[i]['nombre'].toString().substring(0, 12)}…"
+                                        ? "${data[i]['nombre'].toString().substring(0, 12)}…" // Corta los nombres largos
                                         : data[i]['nombre'],
                                     style: TextStyle(fontSize: 11),
                                   ),
                                 );
                               }
-                              return Container();
+                              return Container(); // Si no hay nombre, retorna un contenedor vacío
                             },
                           ),
                         ),
                         rightTitles: AxisTitles(),
                         topTitles: AxisTitles(),
                       ),
-                      gridData: FlGridData(show: false),
-                      borderData: FlBorderData(show: false),
+                      gridData: FlGridData(
+                        show: false,
+                      ), // Desactiva la cuadrícula
+                      borderData: FlBorderData(show: false), // Sin borde
                       barGroups: [
                         for (int i = 0; i < data.length; i++)
                           BarChartGroupData(
                             x: i,
                             barRods: [
                               BarChartRodData(
-                                toY: (data[i]['usos'] as int).toDouble(),
+                                toY: (data[i]['usos'] as int)
+                                    .toDouble(), // Usos en el gráfico
                                 width: 22,
                                 color: Colors.blue,
                                 borderRadius: BorderRadius.circular(5),
@@ -83,13 +95,14 @@ class EstadisticasUbicacionesPantalla extends StatelessWidget {
                             ],
                           ),
                       ],
-                      maxY: (maxUsos + 1).toDouble(),
+                      maxY: (maxUsos + 1)
+                          .toDouble(), // Ajusta el máximo del eje Y
                     ),
                   ),
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  "Ranking Top 7:",
+                  "Ranking Top 7:", // Título del ranking
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 ...data.asMap().entries.map((e) {
@@ -98,7 +111,7 @@ class EstadisticasUbicacionesPantalla extends StatelessWidget {
                   return ListTile(
                     leading: CircleAvatar(
                       backgroundColor: Colors.blue.shade700,
-                      child: Text("${i + 1}"),
+                      child: Text("${i + 1}"), // Muestra el ranking
                     ),
                     title: Text(marca['nombre'] ?? ''),
                     subtitle: Text("Usos: ${marca['usos']}"),

@@ -27,17 +27,18 @@ dependencies:
   #mapa
   flutter_map: ^7.0.2
   latlong2: ^0.9.0
-  geolocator: ^11.0.0
+  geolocator: ^14.0.2
+
   #grafico de barras
-  fl_chart: ^0.66.0
+  fl_chart: ^1.0.0
   #Mapa de calor
   flutter_map_heatmap: ^0.0.8
   #PDF
   pdf: ^3.10.8
   printing: ^5.12.0
   #Exportar a Excel
-  csv: ^5.0.2
-  share_plus: ^7.2.1
+  csv: ^6.0.0
+  share_plus: ^11.0.0
   path_provider: ^2.1.3
 
   # Agregar la librería email_validator
@@ -48,7 +49,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
 
