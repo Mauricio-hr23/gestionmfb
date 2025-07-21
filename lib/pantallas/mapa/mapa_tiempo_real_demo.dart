@@ -3,14 +3,11 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:background_locator_2/background_locator_2.dart';
 import 'dart:async';
 
-// --- Servicio de Localización (solo mientras la app está en uso o en segundo plano)
+// --- Servicio de Localización (solo mientras la app está en uso)
 class LocalizacionServicio {
   StreamSubscription<Position>? _subs;
-
-  // Inicia la actualización continua de ubicación (segundo plano o primer plano)
   void iniciarActualizacionContinua(String userId) {
     _subs?.cancel();
     _subs =
@@ -20,43 +17,14 @@ class LocalizacionServicio {
             distanceFilter: 10, // Mínimo movimiento para actualizar (en metros)
           ),
         ).listen((pos) {
-          print(
-            "Ubicación actualizada en primer plano: ${pos.latitude}, ${pos.longitude}",
-          );
           FirebaseFirestore.instance.collection('usuarios').doc(userId).update({
             'ubicacion': {'latitude': pos.latitude, 'longitude': pos.longitude},
           });
         });
-
-    // Iniciar ubicación en segundo plano
-    _startLocationUpdates(userId);
   }
 
-  // Detiene la actualización de ubicación
   void detenerActualizacion() {
     _subs?.cancel();
-    _stopLocationUpdates();
-  }
-
-  // Método para iniciar la actualización en segundo plano
-  void _startLocationUpdates(String userId) {
-    BackgroundLocator().registerLocationUpdate((locationDto) {
-      // Aquí se ejecuta cada vez que la ubicación es actualizada en segundo plano
-      print(
-        "Ubicación en segundo plano: ${locationDto.latitude}, ${locationDto.longitude}",
-      );
-      FirebaseFirestore.instance.collection('usuarios').doc(userId).update({
-        'ubicacion': {
-          'latitude': locationDto.latitude,
-          'longitude': locationDto.longitude,
-        },
-      });
-    });
-  }
-
-  // Método para detener la actualización en segundo plano
-  void _stopLocationUpdates() {
-    BackgroundLocator().unregisterLocationUpdate();
   }
 }
 
@@ -64,7 +32,6 @@ class LocalizacionServicio {
 class ChoferesServicio {
   final _usuarios = FirebaseFirestore.instance.collection('usuarios');
 
-  // Obtiene todos los choferes activos con ubicación
   Stream<List<Map<String, dynamic>>> obtenerChoferesConUbicacion() {
     return _usuarios
         .where('rol', isEqualTo: 'chofer')
@@ -277,14 +244,11 @@ class _MapaTiempoRealDemoState extends State<MapaTiempoRealDemo> {
 
           return FlutterMap(
             options: MapOptions(
-              center: centro,
-              zoom: 14.0,
-              onPositionChanged: (position, hasGesture) {
-                if (hasGesture) {
-                  // Animar el centro del mapa cuando el usuario mueve el mapa
-                  setState(() {});
-                }
-              },
+              initialCenter: centro,
+              initialZoom: 14,
+              interactionOptions: const InteractionOptions(),
+              maxZoom: 19,
+              minZoom: 9,
             ),
             children: [
               TileLayer(
