@@ -1,76 +1,57 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:email_validator/email_validator.dart'; // Importando la librería de validación
 
-class IniciarSesionPantalla extends StatefulWidget {
-  const IniciarSesionPantalla({super.key});
+class RegistrarPantallaclien extends StatefulWidget {
+  const RegistrarPantallaclien({super.key});
 
   @override
-  State<IniciarSesionPantalla> createState() => _IniciarSesionPantallaState();
+  State<RegistrarPantallaclien> createState() => _RegistrarPantallaStateclien();
 }
 
-class _IniciarSesionPantallaState extends State<IniciarSesionPantalla> {
+class _RegistrarPantallaStateclien extends State<RegistrarPantallaclien> {
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _correoController = TextEditingController();
   final TextEditingController _contrasenaController = TextEditingController();
+  String _rol = "cliente"; // El rol es fijo
   bool _cargando = false;
   String? _error;
 
-  Future<void> _iniciarSesion() async {
+  Future<void> _registrarUsuario() async {
     setState(() {
       _cargando = true;
       _error = null;
     });
     try {
+      // Intentamos registrar el usuario en Firebase Auth
       UserCredential credencial = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
+          .createUserWithEmailAndPassword(
             email: _correoController.text.trim(),
             password: _contrasenaController.text,
           );
-      print('UID: ${credencial.user!.uid}'); // <-- AQUÍ
 
-      DocumentSnapshot usuario = await FirebaseFirestore.instance
+      // Si el registro es exitoso, guardamos los datos del usuario en Firestore
+      await FirebaseFirestore.instance
           .collection('usuarios')
           .doc(credencial.user!.uid)
-          .get();
-      print('Usuario exists: ${usuario.exists}'); // <-- AQUÍ
-      print('Usuario data: ${usuario.data()}'); // <-- AQUÍ
+          .set({
+            'nombre': _nombreController.text,
+            'correo': _correoController.text,
+            'rol': _rol,
+            'estado': 'activo',
+          });
 
-      if (!usuario.exists) {
-        setState(
-          () => _error =
-              'No existe documento de usuario en Firestore. Contacta al administrador.',
-        );
-        return;
-      }
-
-      final data = usuario.data() as Map<String, dynamic>?;
-      print('Data: $data'); // <-- AQUÍ
-      if (data == null || !data.containsKey('rol')) {
-        setState(
-          () => _error = 'El documento de usuario no tiene el campo "rol".',
-        );
-        return;
-      }
-      String rol = data['rol'];
-      print('ROL: $rol'); // <-- AQUÍ
-
-      // Navega según el rol
-      if (rol == 'administrador') {
-        Navigator.pushReplacementNamed(context, '/admin_menu');
-      } else if (rol == 'chofer') {
-        Navigator.pushReplacementNamed(context, '/panel_chofer');
-      } else if (rol == 'cliente') {
-        // Navigator.pushReplacementNamed(context, '/panel_cliente');
-      } else {
-        setState(() => _error = 'Rol de usuario no reconocido.');
-      }
+      // Redirigir al usuario a la pantalla de inicio de sesión
+      Navigator.pushReplacementNamed(
+        context,
+        '/login', // Actualizamos la ruta para que coincida con la definida en tu main.dart
+      );
     } on FirebaseAuthException catch (e) {
-      setState(() => _error = 'Auth error: ${e.code} - ${e.message}');
-      print('Auth error: ${e.code} - ${e.message}'); // <-- AQUÍ
+      setState(() => _error = e.message); // Si ocurre un error con FirebaseAuth
     } catch (e) {
-      setState(() => _error = 'Firestore error: $e');
-      print('Firestore error: $e'); // <-- AQUÍ
+      setState(() => _error = "Error desconocido"); // Manejo de otros errores
     } finally {
       setState(() => _cargando = false);
     }
@@ -82,7 +63,7 @@ class _IniciarSesionPantallaState extends State<IniciarSesionPantalla> {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.blue.shade900, Colors.blueGrey.shade400],
+            colors: [Colors.blueGrey.shade900, Colors.blue.shade500],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -103,13 +84,32 @@ class _IniciarSesionPantallaState extends State<IniciarSesionPantalla> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Iniciar Sesión',
+                        'Registro de Usuario',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       SizedBox(height: 24),
+                      // Campo de nombre
+                      TextFormField(
+                        controller: _nombreController,
+                        decoration: InputDecoration(
+                          labelText: "Nombre completo",
+                          prefixIcon: Icon(Icons.person),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        validator: (v) {
+                          RegExp regExp = RegExp(r'^[a-zA-Z\s]+$');
+                          return regExp.hasMatch(v!)
+                              ? null
+                              : "Ingrese un nombre válido (solo letras y espacios)";
+                        },
+                      ),
+                      SizedBox(height: 18),
+                      // Campo de correo electrónico
                       TextFormField(
                         controller: _correoController,
                         decoration: InputDecoration(
@@ -120,11 +120,15 @@ class _IniciarSesionPantallaState extends State<IniciarSesionPantalla> {
                           ),
                         ),
                         keyboardType: TextInputType.emailAddress,
-                        validator: (v) => v!.contains('@')
-                            ? null
-                            : "Correo electrónico inválido",
+                        validator: (v) {
+                          // Usando la librería email_validator
+                          return EmailValidator.validate(v!)
+                              ? null
+                              : "Correo electrónico inválido";
+                        },
                       ),
                       SizedBox(height: 18),
+                      // Campo de contraseña
                       TextFormField(
                         controller: _contrasenaController,
                         decoration: InputDecoration(
@@ -135,10 +139,39 @@ class _IniciarSesionPantallaState extends State<IniciarSesionPantalla> {
                           ),
                         ),
                         obscureText: true,
-                        validator: (v) =>
-                            v!.isEmpty ? "Ingrese su contraseña" : null,
+                        validator: (v) {
+                          String password = v!;
+
+                          // Verificar longitud mínima de 8 caracteres
+                          if (password.length < 8) {
+                            return "La contraseña debe tener al menos 8 caracteres";
+                          }
+
+                          // Verificar que contenga al menos una letra mayúscula
+                          if (!password.contains(RegExp(r'[A-Z]'))) {
+                            return "La contraseña debe contener al menos una letra mayúscula";
+                          }
+
+                          // Verificar que contenga al menos una letra minúscula
+                          if (!password.contains(RegExp(r'[a-z]'))) {
+                            return "La contraseña debe contener al menos una letra minúscula";
+                          }
+
+                          // Verificar que contenga al menos un número
+                          if (!password.contains(RegExp(r'[0-9]'))) {
+                            return "La contraseña debe contener al menos un número";
+                          }
+
+                          // Verificar que contenga al menos un símbolo especial
+                          if (!password.contains(RegExp(r'[@$!%*?&]'))) {
+                            return "La contraseña debe contener al menos un símbolo especial";
+                          }
+
+                          return null; // Si pasa todas las validaciones
+                        },
                       ),
                       SizedBox(height: 24),
+                      // Si hay un error, se muestra aquí
                       if (_error != null)
                         Padding(
                           padding: EdgeInsets.only(bottom: 8),
@@ -147,6 +180,7 @@ class _IniciarSesionPantallaState extends State<IniciarSesionPantalla> {
                             style: TextStyle(color: Colors.red),
                           ),
                         ),
+                      // Botón de registro
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -154,7 +188,7 @@ class _IniciarSesionPantallaState extends State<IniciarSesionPantalla> {
                               ? null
                               : () {
                                   if (_formKey.currentState!.validate()) {
-                                    _iniciarSesion();
+                                    _registrarUsuario(); // Registramos al usuario
                                   }
                                 },
                           style: ElevatedButton.styleFrom(
@@ -167,38 +201,9 @@ class _IniciarSesionPantallaState extends State<IniciarSesionPantalla> {
                           child: _cargando
                               ? CircularProgressIndicator(color: Colors.white)
                               : Text(
-                                  "Iniciar Sesión",
+                                  "Registrarse",
                                   style: TextStyle(fontSize: 16),
                                 ),
-                        ),
-                      ),
-                      SizedBox(height: 16),
-                      // BOTÓN AGREGADO: Ir a registro
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/registroclien');
-                        },
-                        child: Text(
-                          "¿No tienes cuenta? Regístrate aquí",
-                          style: TextStyle(
-                            color: Colors.blueAccent,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                      // BOTÓN AGREGADO: Recuperar contraseña
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/recuperar');
-                        },
-                        child: Text(
-                          "¿Olvidaste tu contraseña?",
-                          style: TextStyle(
-                            color: Colors.blueAccent,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 16,
-                          ),
                         ),
                       ),
                     ],

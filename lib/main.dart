@@ -12,6 +12,7 @@ import 'proveedores/chofer_proveedor.dart';
 // Importa tus pantallas principales
 import 'pantallas/autenticacion/iniciar_sesion_pantalla.dart';
 import 'pantallas/autenticacion/registrar_pantalla.dart';
+import 'pantallas/autenticacion/registrar_pantalla_clien.dart';
 import 'pantallas/splash_pantalla.dart';
 import 'pantallas/autenticacion/recuperar_contrasena_pantalla.dart';
 import 'pantallas/administrador/lista_usuarios_pantalla.dart';
@@ -56,6 +57,7 @@ class MFBApp extends StatelessWidget {
           '/': (context) => SplashPantalla(),
           '/login': (context) => IniciarSesionPantalla(),
           '/registro': (context) => RegistrarPantalla(),
+          '/registroclien': (context) => RegistrarPantallaclien(),
           '/recuperar': (context) => RecuperarContrasenaPantalla(),
           '/lista_usuarios': (context) => ListaUsuariosPantalla(),
           '/vehiculos': (context) => ListaVehiculosPantalla(),
