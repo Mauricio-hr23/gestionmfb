@@ -15,7 +15,7 @@ class _RegistrarPantallaStateclien extends State<RegistrarPantallaclien> {
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _correoController = TextEditingController();
   final TextEditingController _contrasenaController = TextEditingController();
-  String _rol = "cliente"; // El rol es fijo
+  final String _rol = "cliente"; // El rol es fijo
   bool _cargando = false;
   String? _error;
 

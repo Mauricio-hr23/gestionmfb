@@ -35,9 +35,9 @@ class LocalizacionServicio {
 
   // Lógica para obtener choferes y sus ubicaciones
   Stream<List<Map<String, dynamic>>> obtenerChoferesConUbicacion() {
-    final _usuarios = FirebaseFirestore.instance.collection('usuarios');
+    final usuarios = FirebaseFirestore.instance.collection('usuarios');
 
-    return _usuarios
+    return usuarios
         .where('rol', isEqualTo: 'chofer')
         .where('estado', isEqualTo: 'activo')
         .snapshots()
