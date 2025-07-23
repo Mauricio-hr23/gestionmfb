@@ -220,97 +220,118 @@ class _MapaTiempoRealDemoState extends State<MapaTiempoRealDemo> {
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _choferesServicio.obtenerChoferesConUbicacion(),
         builder: (context, snapshot) {
-          // --- NUEVO: manejo de errores en el stream
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
           if (!snapshot.hasData) {
             return Center(child: CircularProgressIndicator());
           }
+
           final choferes = snapshot.data!;
           if (choferes.isEmpty) {
             return Center(child: Text('No hay choferes activos en el mapa.'));
           }
-          // Centrar en el usuario actual o primer chofer
-          final self = choferes.firstWhere(
-            (ch) => ch['id'] == widget.userId,
-            orElse: () => choferes.first,
-          );
-          final selfLoc = self['ubicacion'];
-          final LatLng centro = LatLng(
-            selfLoc['latitude'],
-            selfLoc['longitude'],
+
+          final String choferId =
+              ModalRoute.of(context)!.settings.arguments as String;
+
+          final chofer = choferes.firstWhere(
+            (ch) => ch['id'] == choferId,
+            orElse: () =>
+                <
+                  String,
+                  dynamic
+                >{}, // Retorna un mapa vacío si no encuentra el chofer
           );
 
-          return FlutterMap(
-            options: MapOptions(
-              initialCenter: centro,
-              initialZoom: 14,
-              interactionOptions: const InteractionOptions(),
-              maxZoom: 19,
-              minZoom: 9,
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.tuapp.app',
-              ),
-              MarkerLayer(
-                markers: choferes.map((chofer) {
-                  final ubicacion = chofer['ubicacion'];
-                  return Marker(
-                    width: 75,
-                    height: 75,
-                    point: LatLng(
-                      ubicacion['latitude'],
-                      ubicacion['longitude'],
-                    ),
-                    child: MarcadorChoferWidget(
-                      nombre: chofer['nombre'],
-                      fotoUrl: chofer['foto_url'],
-                      esActivo: chofer['id'] == widget.userId,
-                      onTap: () {
-                        showModalBottomSheet(
-                          context: context,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(22),
-                            ),
-                          ),
-                          builder: (_) => Padding(
-                            padding: EdgeInsets.all(18),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  chofer['nombre'],
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                                if (chofer['foto_url'] != null)
-                                  Padding(
-                                    padding: EdgeInsets.all(6),
-                                    child: CircleAvatar(
-                                      backgroundImage: NetworkImage(
-                                        chofer['foto_url'],
-                                      ),
-                                      radius: 30,
-                                    ),
-                                  ),
-                                if (chofer['telefono'] != null)
-                                  Text("Teléfono: ${chofer['telefono']}"),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                }).toList(),
-              ),
-            ],
+          if (chofer == null) {
+            return Center(child: Text('Chofer no encontrado.'));
+          }
+
+          final ubicacionChofer = chofer['ubicacion'];
+          final LatLng centro = LatLng(
+            ubicacionChofer['latitude'],
+            ubicacionChofer['longitude'],
+          );
+
+          Future<Map<String, dynamic>> _obtenerUbicacionPedido(
+            String ticketId,
+          ) async {
+            // Simula una consulta a base de datos o API
+            await Future.delayed(Duration(seconds: 1));
+            return {'latitud': -12.0464, 'longitud': -77.0428};
+          }
+
+          // ...existing code...
+          final String ticketId =
+              'ID_DEL_TICKET'; // Reemplaza con el ID real del ticket
+          final Future<Map<String, dynamic>> pedidoUbicacion =
+              _obtenerUbicacionPedido(ticketId);
+
+          return FutureBuilder<Map<String, dynamic>>(
+            future: pedidoUbicacion,
+            builder: (context, pedidoSnapshot) {
+              if (pedidoSnapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              }
+              if (pedidoSnapshot.hasError) {
+                return Center(child: Text('Error: ${pedidoSnapshot.error}'));
+              }
+
+              final ubicacionPedido = pedidoSnapshot.data;
+              if (ubicacionPedido == null) {
+                return Center(
+                  child: Text('No se encontró la ubicación del pedido.'),
+                );
+              }
+              final LatLng ubicacionEntrega = LatLng(
+                ubicacionPedido['latitud'],
+                ubicacionPedido['longitud'],
+              );
+              // ...existing code...
+
+              return FlutterMap(
+                options: MapOptions(initialCenter: centro, initialZoom: 14),
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      // Marcador del chofer
+                      Marker(
+                        width: 75,
+                        height: 75,
+                        point: LatLng(
+                          ubicacionChofer['latitude'],
+                          ubicacionChofer['longitude'],
+                        ),
+                        child: MarcadorChoferWidget(
+                          nombre: chofer['nombre'],
+                          fotoUrl: chofer['foto_url'],
+                          esActivo: chofer['id'] == choferId,
+                          onTap: () {
+                            // Mostrar más detalles del chofer si es necesario
+                          },
+                        ),
+                      ),
+                      // Marcador del punto de entrega
+                      Marker(
+                        width: 75,
+                        height: 75,
+                        point: ubicacionEntrega,
+                        child: Icon(
+                          Icons.location_on,
+                          color: Colors.red,
+                          size: 40,
+                        ), // O el ícono que prefieras
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
           );
         },
       ),

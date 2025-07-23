@@ -61,7 +61,7 @@ class _IniciarSesionPantallaState extends State<IniciarSesionPantalla> {
       } else if (rol == 'chofer') {
         Navigator.pushReplacementNamed(context, '/panel_chofer');
       } else if (rol == 'cliente') {
-        // Navigator.pushReplacementNamed(context, '/panel_cliente');
+        Navigator.pushReplacementNamed(context, '/ticket_clien');
       } else {
         setState(() => _error = 'Rol de usuario no reconocido.');
       }

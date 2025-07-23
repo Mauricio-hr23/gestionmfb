@@ -17,16 +17,15 @@ import 'pantallas/splash_pantalla.dart';
 import 'pantallas/autenticacion/recuperar_contrasena_pantalla.dart';
 import 'pantallas/administrador/lista_usuarios_pantalla.dart';
 import 'pantallas/administrador/admin_menu_pantalla.dart';
+import 'pantallas/cliente/ticket_clien.dart'; // Agrega esta importación
+import 'pantallas/mapa/mapa_tiempo_real_demo.dart'; // Importa la pantalla del mapa
 
 // Importa pantallas de gestión de vehículos y choferes
 import 'pantallas/vehiculos/lista_vehiculos_pantalla.dart';
 import 'pantallas/chofer/lista_choferes_pantalla.dart';
 import 'pantallas/chofer/agregar_chofer_pantalla.dart';
 
-// Si tienes dashboards o paneles por rol, los puedes importar aquí
-// import 'pantallas/administrador/admin_panel_pantalla.dart';
-// import 'pantallas/chofer/chofer_panel_pantalla.dart';
-// import 'pantallas/cliente/cliente_panel_pantalla.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Importa FirebaseAuth
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,15 +42,10 @@ class MFBApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => VehiculoProveedor()),
         ChangeNotifierProvider(create: (_) => ChoferProveedor()),
-        // Agrega otros providers aquí si los necesitas
       ],
       child: MaterialApp(
         title: 'Gestión MFB',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          fontFamily: 'Roboto',
-          // Agrega tu propio ThemeData si quieres un look más personalizado/moderno
-        ),
+        theme: ThemeData(primarySwatch: Colors.blue, fontFamily: 'Roboto'),
         initialRoute: '/',
         routes: {
           '/': (context) => SplashPantalla(),
@@ -67,11 +61,18 @@ class MFBApp extends StatelessWidget {
           '/crear-pedido': (context) => CrearPedidoPantalla(),
           '/lista-pedidos': (context) => ListaPedidosPantalla(),
           '/panel_chofer': (context) => PanelChoferPantalla(),
-          //'/seguimiento-pedido': (context) => SeguimientoPedidoPantalla(),
-
-          // '/panel_admin': (context) => PanelAdminPantalla(),
-          // '/panel_chofer': (context) => PanelChoferPantalla(),
-          // '/panel_cliente': (context) => PanelClientePantalla(),
+          '/ticket_clien': (context) => TicketClienteScreen(),
+          '/mapa_tiempo_real': (context) {
+            final user = FirebaseAuth.instance.currentUser;
+            if (user != null) {
+              return MapaTiempoRealDemo(
+                userId: user.uid,
+              ); // Si el usuario está autenticado, pasamos el userId
+            } else {
+              // Si el usuario no está autenticado, redirigimos a la pantalla de inicio de sesión
+              return IniciarSesionPantalla();
+            }
+          },
         },
         debugShowCheckedModeBanner: false,
       ),
