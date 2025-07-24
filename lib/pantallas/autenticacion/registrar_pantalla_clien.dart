@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:email_validator/email_validator.dart'; // Importando la librería de validación
+import 'package:http/http.dart' as http;
 
 class RegistrarPantallaclien extends StatefulWidget {
   const RegistrarPantallaclien({super.key});
@@ -18,11 +19,24 @@ class _RegistrarPantallaStateclien extends State<RegistrarPantallaclien> {
   String _rol = "cliente"; // El rol es fijo
   bool _cargando = false;
   String? _error;
+  String? _dominioError;
+
+  // Lista blanca de dominios comunes y populares
+  final List<String> domainsWhitelist = [
+    "gmail.com",
+    "hotmail.com",
+    "outlook.com",
+    "yahoo.com",
+    "icloud.com",
+    "aol.com",
+  ];
 
   Future<void> _registrarUsuario() async {
     setState(() {
       _cargando = true;
       _error = null;
+      _dominioError =
+          null; // Limpiar el error de dominio al intentar registrarse
     });
     try {
       // Intentamos registrar el usuario en Firebase Auth
@@ -55,6 +69,11 @@ class _RegistrarPantallaStateclien extends State<RegistrarPantallaclien> {
     } finally {
       setState(() => _cargando = false);
     }
+  }
+
+  Future<bool> _isDomainWhitelisted(String domain) async {
+    // Verifica si el dominio está en la lista blanca
+    return domainsWhitelist.contains(domain);
   }
 
   @override
@@ -120,13 +139,50 @@ class _RegistrarPantallaStateclien extends State<RegistrarPantallaclien> {
                           ),
                         ),
                         keyboardType: TextInputType.emailAddress,
+                        // Validación síncrona en el 'validator' para formato
                         validator: (v) {
-                          // Usando la librería email_validator
-                          return EmailValidator.validate(v!)
-                              ? null
-                              : "Correo electrónico inválido";
+                          // Validación básica de formato
+                          if (!EmailValidator.validate(v!)) {
+                            return "Correo electrónico con formato incorrecto";
+                          }
+                          final emailParts = v.split('@');
+                          if (emailParts.length != 2) {
+                            return "Correo electrónico con formato incorrecto";
+                          }
+                          return null; // Si el formato es correcto
+                        },
+                        onChanged: (v) async {
+                          // Verificación de dominio (ejemplo básico)
+                          if (EmailValidator.validate(v)) {
+                            final emailParts = v.split('@');
+                            if (emailParts.length == 2) {
+                              // Verificación de existencia del dominio
+                              final domain = emailParts[1];
+                              bool isWhitelisted = await _isDomainWhitelisted(
+                                domain,
+                              );
+                              if (!isWhitelisted) {
+                                setState(() {
+                                  _dominioError =
+                                      "Dominio no válido o inexistente";
+                                });
+                              } else {
+                                setState(() {
+                                  _dominioError = null; // Dominio válido
+                                });
+                              }
+                            }
+                          }
                         },
                       ),
+                      if (_dominioError != null)
+                        Padding(
+                          padding: EdgeInsets.only(top: 8),
+                          child: Text(
+                            _dominioError!,
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
                       SizedBox(height: 18),
                       // Campo de contraseña
                       TextFormField(
