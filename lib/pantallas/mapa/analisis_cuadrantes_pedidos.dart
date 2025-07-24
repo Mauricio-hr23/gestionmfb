@@ -238,12 +238,14 @@ class _AnalisisCuadrantesPedidosPantallaState
 
             // Determinar el color según la intensidad
             Color color = Colors.green.withOpacity(0.1); // Color base (suave)
-            if (intensity > 5)
+            if (intensity > 5) {
               color = Colors.orange.withOpacity(
                 0.6,
               ); // Más pedidos -> más intensidad
-            if (intensity > 10)
+            }
+            if (intensity > 10) {
               color = Colors.red.withOpacity(0.8); // Muy alto -> rojo intenso
+            }
 
             return CircleMarker(
               point: LatLng(lat, lng),

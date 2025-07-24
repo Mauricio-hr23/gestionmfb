@@ -6,6 +6,7 @@ import 'package:gestion_mfb/pantallas/mapa/analisis_geografico_pedidos.dart';
 import 'package:gestion_mfb/pantallas/mapa/analisis_cuadrantes_pedidos.dart';
 import 'package:gestion_mfb/pantallas/rutas/ruta_pantalla.dart';
 import 'package:gestion_mfb/pantallas/rutas/ver_choferes_con_rutas.dart';
+import 'package:gestion_mfb/servicios/pedido_servicio.dart'; // Asegúrate de que esta ruta sea correcta
 
 class AdminMenuPantalla extends StatelessWidget {
   const AdminMenuPantalla({super.key});
@@ -131,17 +132,7 @@ class AdminMenuPantalla extends StatelessWidget {
                   ),
                 ),
               ),
-              _AdminMenuCard(
-                color: Colors.green.shade800,
-                icon: Icons.grid_on,
-                title: 'Ver Choferes con Rutas',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => VerChoferesConRutasPantalla(),
-                  ),
-                ),
-              ),
+              //
               ElevatedButton(
                 onPressed: () {
                   Navigator.push(

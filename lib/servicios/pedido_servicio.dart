@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:latlong2/latlong.dart';
 import '../modelos/pedido_modelo.dart';
 import 'package:flutter/material.dart'; // Importar el paquete material.dart
 
 class PedidoServicio {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final _pedidoRef = FirebaseFirestore.instance.collection('pedidos');
+  final _pedidos = FirebaseFirestore.instance.collection('pedidos');
 
   // Crear un nuevo pedido
   Future<void> crearPedido(PedidoModelo pedido) async {
@@ -25,18 +27,26 @@ class PedidoServicio {
   }
 
   // Obtener todos los pedidos en tiempo real
-  Stream<List<PedidoModelo>> obtenerPedidos() {
-    return _pedidoRef.snapshots().map((snapshot) {
-      print(
-        "Pedidos obtenidos: ${snapshot.docs.length}",
-      ); // Añade esta línea para ver cuántos documentos se obtienen
-      return snapshot.docs.map((doc) {
-        return PedidoModelo.fromFirestore(
-          doc.data() as Map<String, dynamic>,
-          doc.id,
-        );
-      }).toList();
-    });
+  Future<List<Map<String, dynamic>>> obtenerPedidos(String ticketId) async {
+    final snapshot = await _pedidos
+        .where('ticketsId', isEqualTo: ticketId)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      return {
+        'id': doc.id,
+        'ubicacion': data['ubicacion'] != null
+            ? LatLng(
+                data['ubicacion']['latitud'],
+                data['ubicacion']['longitud'],
+              )
+            : null,
+        'nombre': data['nombre'],
+        'ticketsId': data['ticketsId'], // Aquí traemos ticketsId
+        'choferId': data['choferId'], // También obtenemos choferId
+      };
+    }).toList();
   }
 
   // Actualizar el estado de un pedido

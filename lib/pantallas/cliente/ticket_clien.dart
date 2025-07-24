@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:gestion_mfb/pantallas/rutas/ver_choferes_con_rutas.dart';
 
 class TicketClienteScreen extends StatefulWidget {
   const TicketClienteScreen({super.key});
@@ -133,11 +134,15 @@ class TicketClienteScreenState extends State<TicketClienteScreen> {
   // Función para rastrear el pedido
   void _rastrearPedido() {
     if (choferData != null && choferId.isNotEmpty) {
-      // Navegar al mapa con el choferId
-      Navigator.pushNamed(
+      // Pasamos el ticketId al navegar hacia VerChoferesConRutasPantalla
+      Navigator.push(
         context,
-        '/mapa_tiempo_real',
-        arguments: choferId, // Pasamos solo el choferId
+        MaterialPageRoute(
+          builder: (context) => VerChoferesConRutasPantalla(
+            ticketId: _ticketController.text
+                .trim(), // Asegúrate de pasar el ticketId
+          ),
+        ),
       );
     } else {
       setState(() {

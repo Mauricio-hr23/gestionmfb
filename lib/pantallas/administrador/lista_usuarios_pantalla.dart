@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:provider/provider.dart';
 import '../perfil/editar_perfil_admin_pantalla.dart';
 import '../chofer/agregar_chofer_pantalla.dart';
 

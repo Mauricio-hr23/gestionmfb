@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:gestion_mfb/pantallas/chofer/chofer_panel_pantalla.dart';
+import 'package:gestion_mfb/pantallas/cliente/ticket_clien.dart';
 import 'package:gestion_mfb/pantallas/pedidos/crear_pedido_pantalla.dart';
 import 'package:gestion_mfb/pantallas/pedidos/lista_pedidos_pantalla.dart';
 import 'package:provider/provider.dart';
@@ -17,7 +18,7 @@ import 'pantallas/splash_pantalla.dart';
 import 'pantallas/autenticacion/recuperar_contrasena_pantalla.dart';
 import 'pantallas/administrador/lista_usuarios_pantalla.dart';
 import 'pantallas/administrador/admin_menu_pantalla.dart';
-import 'pantallas/cliente/ticket_clien.dart'; // Agrega esta importación
+
 import 'pantallas/mapa/mapa_tiempo_real_demo.dart'; // Importa la pantalla del mapa
 
 // Importa pantallas de gestión de vehículos y choferes
