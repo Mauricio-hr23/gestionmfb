@@ -15,6 +15,11 @@ class TarjetaVehiculo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Verificar si el chofer tiene nombre o solo mostrar "No asignado"
+    final choferTexto = (vehiculo.choferId?.isNotEmpty ?? false)
+        ? 'Chofer: ${vehiculo.choferId}' // Aquí deberías cambiarlo por el nombre real si lo tienes
+        : "Chofer: No asignado";
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -22,11 +27,11 @@ class TarjetaVehiculo extends StatelessWidget {
       child: ListTile(
         leading: Icon(Icons.local_shipping, size: 38),
         title: Text(
-          '${vehiculo.modelo} - ${vehiculo.placa}',
+          '${vehiculo.numeroVehiculo} - ${vehiculo.placa}', // Asegúrate de que 'numeroVehiculo' es lo que quieres mostrar
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Text(
-          'Estado: ${vehiculo.estado}\nChofer: ${(vehiculo.choferId ?? '').isNotEmpty ? vehiculo.choferId : "No asignado"}',
+          'Estado: ${vehiculo.estado}\n$choferTexto', // Aquí mostramos el texto del chofer
         ),
         trailing: PopupMenuButton<String>(
           onSelected: (value) {

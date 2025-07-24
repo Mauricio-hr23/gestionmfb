@@ -96,6 +96,7 @@ class _AnalisisCuadrantesPedidosPantallaState
       'promedioPorCuadrante': (destinos.length / conteo.length).toStringAsFixed(
         2,
       ),
+      'destinos': destinos, // Pasar todos los destinos
     };
   }
 
@@ -120,6 +121,8 @@ class _AnalisisCuadrantesPedidosPantallaState
           final totalPedidos = analisis['totalPedidos'];
           final cuadrantesUnicos = analisis['cuadrantesUnicos'];
           final promedio = analisis['promedioPorCuadrante'];
+          final destinos =
+              analisis['destinos'] as List<dynamic>; // Todos los destinos
 
           final List<Polygon> polygons = [
             // Polígono del cuadrante más demandado
@@ -225,6 +228,33 @@ class _AnalisisCuadrantesPedidosPantallaState
             ),
           ];
 
+          // Generar círculos con opacidad variable para simular el mapa de calor
+          // Generar círculos con opacidad variable para simular el mapa de calor
+          List<CircleMarker> circleMarkers = destinos.map((d) {
+            final lat = d['latitud'];
+            final lng = d['longitud'];
+            final intensity = (d['total'] ?? 1)
+                .toDouble(); // Aseguramos que intensity sea un double
+
+            // Determinar el color según la intensidad
+            Color color = Colors.green.withOpacity(0.1); // Color base (suave)
+            if (intensity > 5)
+              color = Colors.orange.withOpacity(
+                0.6,
+              ); // Más pedidos -> más intensidad
+            if (intensity > 10)
+              color = Colors.red.withOpacity(0.8); // Muy alto -> rojo intenso
+
+            return CircleMarker(
+              point: LatLng(lat, lng),
+              radius: (10 + intensity * 2)
+                  .toDouble(), // Ajustar tamaño según la intensidad y asegurarnos de que sea un double
+              color: color,
+              borderColor: color.withOpacity(1),
+              borderStrokeWidth: 1,
+            );
+          }).toList();
+
           return RefreshIndicator(
             onRefresh: () async {
               setState(() {
@@ -248,7 +278,7 @@ class _AnalisisCuadrantesPedidosPantallaState
                             topCuadrante['centro_lat'],
                             topCuadrante['centro_lng'],
                           ),
-                          initialZoom: 14,
+                          initialZoom: 14, // Usamos initialZoom
                           maxZoom: 18,
                           minZoom: 2,
                         ),
@@ -260,6 +290,9 @@ class _AnalisisCuadrantesPedidosPantallaState
                           ),
                           PolygonLayer(polygons: polygons),
                           MarkerLayer(markers: markers),
+                          CircleLayer(
+                            circles: circleMarkers,
+                          ), // Agregamos la capa de círculos
                         ],
                       ),
                     ),

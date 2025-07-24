@@ -19,6 +19,7 @@ class _ListaVehiculosPantallaState extends State<ListaVehiculosPantalla> {
   @override
   void initState() {
     super.initState();
+    // Cargar vehículos desde el proveedor
     Future.microtask(
       () => Provider.of<VehiculoProveedor>(
         context,
@@ -31,7 +32,7 @@ class _ListaVehiculosPantallaState extends State<ListaVehiculosPantalla> {
     return vehiculos.where((v) {
       final texto = _busqueda.toLowerCase();
       final coincideBusqueda =
-          v.modelo.toLowerCase().contains(texto) ||
+          v.numeroVehiculo.toLowerCase().contains(texto) ||
           v.placa.toLowerCase().contains(texto);
       final coincideEstado =
           _filtroEstado == 'todos' || v.estado == _filtroEstado;
@@ -49,10 +50,12 @@ class _ListaVehiculosPantallaState extends State<ListaVehiculosPantalla> {
             icon: Icon(Icons.add),
             tooltip: "Nuevo Vehículo",
             onPressed: () async {
+              // Al presionar el botón "Nuevo Vehículo", navegamos a la pantalla de edición
               await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => EditarVehiculoPantalla()),
               );
+              // Recargar los vehículos después de editar
               Provider.of<VehiculoProveedor>(
                 context,
                 listen: false,
@@ -63,6 +66,7 @@ class _ListaVehiculosPantallaState extends State<ListaVehiculosPantalla> {
       ),
       body: Consumer<VehiculoProveedor>(
         builder: (context, proveedor, _) {
+          // Filtrar los vehículos según la búsqueda y el estado
           final vehiculosFiltrados = _filtrarVehiculos(proveedor.vehiculos);
 
           return Column(
@@ -75,7 +79,8 @@ class _ListaVehiculosPantallaState extends State<ListaVehiculosPantalla> {
                       child: TextField(
                         decoration: InputDecoration(
                           prefixIcon: Icon(Icons.search),
-                          hintText: 'Buscar por modelo, placa o chofer',
+                          hintText:
+                              'Buscar por número de vehículo, placa o chofer',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -114,6 +119,7 @@ class _ListaVehiculosPantallaState extends State<ListaVehiculosPantalla> {
                           return TarjetaVehiculo(
                             vehiculo: vehiculo,
                             onEdit: () async {
+                              // Navegar a la pantalla de edición con el vehículo seleccionado
                               await Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -122,12 +128,14 @@ class _ListaVehiculosPantallaState extends State<ListaVehiculosPantalla> {
                                   ),
                                 ),
                               );
+                              // Recargar los vehículos después de editar
                               Provider.of<VehiculoProveedor>(
                                 context,
                                 listen: false,
                               ).cargarVehiculos();
                             },
                             onDelete: () async {
+                              // Confirmar eliminación antes de proceder
                               final confirm = await showDialog(
                                 context: context,
                                 builder: (ctx) => AlertDialog(
@@ -149,10 +157,16 @@ class _ListaVehiculosPantallaState extends State<ListaVehiculosPantalla> {
                                 ),
                               );
                               if (confirm == true) {
+                                // Eliminar vehículo
                                 Provider.of<VehiculoProveedor>(
                                   context,
                                   listen: false,
                                 ).eliminarVehiculo(vehiculo.id);
+                                // Recargar vehículos después de la eliminación
+                                Provider.of<VehiculoProveedor>(
+                                  context,
+                                  listen: false,
+                                ).cargarVehiculos();
                               }
                             },
                           );

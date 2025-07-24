@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
@@ -19,7 +20,8 @@ class _EditarPerfilAdminPantallaState extends State<EditarPerfilAdminPantalla> {
   final _correoController = TextEditingController();
   final _telefonoController = TextEditingController();
   String? _urlFoto;
-  String _rol = "cliente";
+  String _rol =
+      "cliente"; // Aun lo mantenemos, pero no se mostrará ni podrá ser editado
   File? _nuevaFoto;
   bool _cargando = false;
   String? _mensaje;
@@ -41,7 +43,9 @@ class _EditarPerfilAdminPantallaState extends State<EditarPerfilAdminPantalla> {
       _correoController.text = doc['correo'] ?? '';
       _telefonoController.text = doc['telefono'] ?? '';
       _urlFoto = doc['foto_url'];
-      _rol = doc['rol'] ?? 'cliente';
+      _rol =
+          doc['rol'] ??
+          'cliente'; // Aunque no sea editable, seguimos obteniendo el rol
       setState(() {});
     } catch (e) {
       setState(() => _mensaje = "Error cargando perfil");
@@ -64,12 +68,45 @@ class _EditarPerfilAdminPantallaState extends State<EditarPerfilAdminPantalla> {
   }
 
   Future<String?> _subirFoto() async {
-    if (_nuevaFoto == null) return _urlFoto;
+    if (_nuevaFoto == null)
+      return _urlFoto; // Si no hay nueva foto, retorna la URL existente.
+
     final ref = FirebaseStorage.instance.ref().child(
       'usuarios/${widget.uidUsuario}/foto_perfil.jpg',
     );
-    await ref.putFile(_nuevaFoto!);
-    return await ref.getDownloadURL();
+
+    try {
+      // Subir nueva foto
+      await ref.putFile(_nuevaFoto!);
+
+      // Obtener la URL de la foto cargada
+      String downloadURL = await ref.getDownloadURL();
+
+      return downloadURL; // Retornar la URL pública de la imagen
+    } catch (e) {
+      // Si ocurre un error, manejarlo adecuadamente
+      print("Error al subir la foto: $e");
+      return null;
+    }
+  }
+
+  // Validación estricta para el número de teléfono
+  bool _validarTelefono(String telefono) {
+    // Limpiar el número para quitar espacios, guiones y otros caracteres no numéricos
+    String numeroLimpiado = telefono.replaceAll(
+      RegExp(r'\D'),
+      '',
+    ); // Quita todo lo que no sea número
+
+    // Verificar que tenga exactamente 10 dígitos y comience con '09'
+    final regex = RegExp(r'^09\d{8}$');
+    return regex.hasMatch(numeroLimpiado);
+  }
+
+  // Validación del nombre para solo permitir letras y espacios
+  bool _validarNombre(String nombre) {
+    final regex = RegExp(r'^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$');
+    return regex.hasMatch(nombre);
   }
 
   Future<void> _guardarPerfil() async {
@@ -77,16 +114,65 @@ class _EditarPerfilAdminPantallaState extends State<EditarPerfilAdminPantalla> {
       _cargando = true;
       _mensaje = null;
     });
+
+    // Validación de nombre
+    String nombre = _nombreController.text;
+    if (nombre.isEmpty) {
+      setState(() {
+        _mensaje = "Por favor ingrese un nombre.";
+      });
+      setState(() => _cargando = false);
+      return;
+    }
+
+    if (!_validarNombre(nombre)) {
+      setState(() {
+        _mensaje = "El nombre solo debe contener letras y espacios.";
+      });
+      setState(() => _cargando = false);
+      return;
+    }
+
+    // Validación de número de teléfono
+    String telefono = _telefonoController.text;
+    if (telefono.isEmpty) {
+      setState(() {
+        _mensaje = "Por favor ingrese un número de teléfono.";
+      });
+      setState(() => _cargando = false);
+      return;
+    }
+
+    // Verificar si el número tiene letras o caracteres no numéricos
+    if (!RegExp(r'^[0-9]+$').hasMatch(telefono)) {
+      setState(() {
+        _mensaje =
+            "Número de teléfono inválido. Debe tener 10 dígitos, comenzar con 09 y no contener letras ni caracteres especiales.";
+      });
+      setState(() => _cargando = false);
+      return;
+    }
+
+    // Validar que el número cumpla con la estructura correcta
+    if (!_validarTelefono(telefono)) {
+      setState(() {
+        _mensaje =
+            "Número de teléfono inválido. Debe tener 10 dígitos y comenzar con 09.";
+      });
+      setState(() => _cargando = false);
+      return;
+    }
+
     try {
       String? urlFoto = await _subirFoto();
       await FirebaseFirestore.instance
           .collection('usuarios')
           .doc(widget.uidUsuario)
           .update({
-            'nombre': _nombreController.text,
-            'telefono': _telefonoController.text,
+            'nombre': nombre,
+            'telefono': telefono,
             'foto_url': urlFoto,
-            'rol': _rol,
+            // El rol no se actualiza ya que no es editable
           });
       setState(() {
         _mensaje = "Perfil actualizado correctamente";
@@ -136,11 +222,10 @@ class _EditarPerfilAdminPantallaState extends State<EditarPerfilAdminPantalla> {
           );
           await ref.delete();
         }
-        // Puedes agregar aquí lógica para eliminar el usuario de Firebase Auth si quieres (requiere admin SDK en backend)
+        // Regresar a la lista
         setState(() {
           _mensaje = "Usuario eliminado";
         });
-        // Regresar a la lista
         Future.delayed(Duration(seconds: 1), () {
           Navigator.pop(context, true);
         });
@@ -165,7 +250,7 @@ class _EditarPerfilAdminPantallaState extends State<EditarPerfilAdminPantalla> {
   Widget build(BuildContext context) {
     final imgSize = 110.0;
     return Scaffold(
-      appBar: AppBar(title: Text('Editar Perfil (Admin)')),
+      appBar: AppBar(title: Text('Editar Perfil de Usuario')),
       body: _cargando
           ? Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -179,10 +264,13 @@ class _EditarPerfilAdminPantallaState extends State<EditarPerfilAdminPantalla> {
                         CircleAvatar(
                           radius: imgSize / 2,
                           backgroundImage: _nuevaFoto != null
-                              ? FileImage(_nuevaFoto!)
+                              ? FileImage(
+                                  _nuevaFoto!,
+                                ) // Usar la nueva foto seleccionada
                               : (_urlFoto != null && _urlFoto!.isNotEmpty)
-                              ? NetworkImage(_urlFoto!) as ImageProvider
-                              : AssetImage('assets/avatar_default.png'),
+                              ? NetworkImage(_urlFoto!)
+                                    as ImageProvider // Usar la foto de Firebase
+                              : null, // No se asigna ninguna imagen predeterminada
                           backgroundColor: Colors.grey.shade200,
                         ),
                         Positioned(
@@ -238,36 +326,6 @@ class _EditarPerfilAdminPantallaState extends State<EditarPerfilAdminPantalla> {
                         ),
                       ),
                       keyboardType: TextInputType.phone,
-                      validator: (v) => v == null || v.length < 8
-                          ? "Ingrese un teléfono válido"
-                          : null,
-                    ),
-                    SizedBox(height: 18),
-                    DropdownButtonFormField<String>(
-                      value: _rol,
-                      items: [
-                        DropdownMenuItem(
-                          value: "cliente",
-                          child: Text("Cliente"),
-                        ),
-                        DropdownMenuItem(
-                          value: "chofer",
-                          child: Text("Chofer"),
-                        ),
-                        DropdownMenuItem(
-                          value: "administrador",
-                          child: Text("Administrador"),
-                        ),
-                      ],
-                      onChanged: (value) =>
-                          setState(() => _rol = value ?? "cliente"),
-                      decoration: InputDecoration(
-                        labelText: "Rol",
-                        prefixIcon: Icon(Icons.verified_user),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
                     ),
                     SizedBox(height: 24),
                     if (_mensaje != null)

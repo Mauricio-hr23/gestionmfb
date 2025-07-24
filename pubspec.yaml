@@ -57,8 +57,7 @@ flutter:
 
   uses-material-design: true
 
-  assets:
-    - assets/avatar_default.png
+  
 dependency_overrides:
   http: ^0.13.3
 

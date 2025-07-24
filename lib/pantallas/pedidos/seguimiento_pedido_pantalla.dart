@@ -67,11 +67,11 @@ class SeguimientoPedidoPantalla extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Cliente: ${pedido.clienteId}",
+                          "Cliente: ${pedido.choferId}",
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 10),
-                        Text("Productos: ${pedido.productos.join(', ')}"),
+                        Text("Productos: ${pedido.ticketId.join(', ')}"),
                         Text(
                           "Fecha estimada: ${pedido.fechaEstimada.day}/${pedido.fechaEstimada.month}/${pedido.fechaEstimada.year}",
                         ),

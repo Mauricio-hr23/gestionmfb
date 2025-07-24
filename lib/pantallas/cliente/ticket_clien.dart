@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class TicketClienteScreen extends StatefulWidget {
+  const TicketClienteScreen({super.key});
+
   @override
   TicketClienteScreenState createState() => TicketClienteScreenState();
 }

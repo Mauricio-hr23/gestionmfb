@@ -244,17 +244,13 @@ class _MapaTiempoRealDemoState extends State<MapaTiempoRealDemo> {
                 >{}, // Retorna un mapa vacío si no encuentra el chofer
           );
 
-          if (chofer == null) {
-            return Center(child: Text('Chofer no encontrado.'));
-          }
-
           final ubicacionChofer = chofer['ubicacion'];
           final LatLng centro = LatLng(
             ubicacionChofer['latitude'],
             ubicacionChofer['longitude'],
           );
 
-          Future<Map<String, dynamic>> _obtenerUbicacionPedido(
+          Future<Map<String, dynamic>> obtenerUbicacionPedido(
             String ticketId,
           ) async {
             // Simula una consulta a base de datos o API
@@ -266,7 +262,7 @@ class _MapaTiempoRealDemoState extends State<MapaTiempoRealDemo> {
           final String ticketId =
               'ID_DEL_TICKET'; // Reemplaza con el ID real del ticket
           final Future<Map<String, dynamic>> pedidoUbicacion =
-              _obtenerUbicacionPedido(ticketId);
+              obtenerUbicacionPedido(ticketId);
 
           return FutureBuilder<Map<String, dynamic>>(
             future: pedidoUbicacion,

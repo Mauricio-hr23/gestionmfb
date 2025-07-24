@@ -16,7 +16,7 @@ class EditarVehiculoPantalla extends StatefulWidget {
 
 class _EditarVehiculoPantallaState extends State<EditarVehiculoPantalla> {
   final formKey = GlobalKey<FormState>();
-  final modeloCtrl = TextEditingController();
+  final numeroVehiculoCtrl = TextEditingController();
   final placaCtrl = TextEditingController();
   final anioCtrl = TextEditingController();
   String estado = 'activo';
@@ -24,36 +24,59 @@ class _EditarVehiculoPantallaState extends State<EditarVehiculoPantalla> {
   File? _fotoFile;
   String? error;
   UsuarioModelo? choferAsignado;
+  List<UsuarioModelo> choferesDisponibles =
+      []; // Para cargar los choferes disponibles
   bool cargando = false;
 
   @override
   void initState() {
     super.initState();
+    _cargarChoferesDisponibles(); // Cargar choferes disponibles al inicio
+
     final v = widget.vehiculo;
     if (v != null) {
-      modeloCtrl.text = v.modelo;
-      placaCtrl.text = v.placa;
+      numeroVehiculoCtrl.text = v.numeroVehiculo; // No editable
+      placaCtrl.text = v.placa; // No editable
       anioCtrl.text = v.anio?.toString() ?? '';
       estado = (v.estado.toLowerCase().trim() == 'activo')
           ? 'activo'
           : 'inactivo';
       fotoUrl = v.fotoUrl;
-      _cargarChofer(v.choferId);
+
+      // Verificar si choferAsignado es nulo y asignar un valor predeterminado
+      choferAsignado = v.choferId != null
+          ? choferesDisponibles.isNotEmpty
+                ? choferesDisponibles.firstWhere(
+                    (chofer) => chofer.id == v.choferId,
+                    orElse: () =>
+                        choferesDisponibles[0], // Asignar un valor predeterminado si no se encuentra
+                  )
+                : null
+          : null;
     }
   }
 
-  Future<void> _cargarChofer(String? choferId) async {
-    if (choferId != null && choferId.isNotEmpty) {
-      final snap = await FirebaseFirestore.instance
-          .collection('usuarios')
-          .doc(choferId)
-          .get();
-      if (snap.exists) {
-        setState(() {
-          choferAsignado = UsuarioModelo.fromMap(snap.data()!, snap.id);
-        });
+  Future<void> _cargarChoferesDisponibles() async {
+    final snap = await FirebaseFirestore.instance
+        .collection('usuarios')
+        .where('rol', isEqualTo: 'chofer') // Solo choferes disponibles
+        .get();
+    final choferes = snap.docs.map((doc) {
+      return UsuarioModelo.fromMap(doc.data(), doc.id);
+    }).toList();
+
+    setState(() {
+      choferesDisponibles = choferes;
+
+      // Verificar si choferAsignado está vacío y asignar un valor predeterminado
+      if (choferesDisponibles.isNotEmpty && choferAsignado == null) {
+        choferAsignado = choferesDisponibles
+            .first; // Asignar el primer chofer si no se ha asignado uno
+      } else {
+        choferAsignado =
+            null; // No asignar ningún chofer si la lista está vacía
       }
-    }
+    });
   }
 
   Future<void> _seleccionarFoto() async {
@@ -84,21 +107,22 @@ class _EditarVehiculoPantallaState extends State<EditarVehiculoPantalla> {
       }
 
       final vehiculoData = {
-        'modelo': modeloCtrl.text.trim(),
-        'placa': placaCtrl.text.trim(),
+        'numero_vehiculo': numeroVehiculoCtrl.text
+            .trim(), // Editable solo al crear
+        'placa': placaCtrl.text.trim(), // Editable solo al crear
         'anio': anioCtrl.text.trim(),
         'estado': estado.toLowerCase().trim(),
         'fotoUrl': url,
-        'chofer_id': widget.vehiculo?.choferId ?? '',
+        'chofer_id': choferAsignado?.id ?? '', // Asignar chofer seleccionado
       };
 
       if (widget.vehiculo == null) {
-        // Crear nuevo
+        // Crear nuevo vehículo
         await FirebaseFirestore.instance
             .collection('vehiculos')
             .add(vehiculoData);
       } else {
-        // Editar existente
+        // Editar vehículo existente
         await FirebaseFirestore.instance
             .collection('vehiculos')
             .doc(widget.vehiculo!.id)
@@ -152,26 +176,33 @@ class _EditarVehiculoPantallaState extends State<EditarVehiculoPantalla> {
                 ),
               ),
               SizedBox(height: 20),
+              // Número de Vehículo (editable solo al crear)
               TextFormField(
-                controller: modeloCtrl,
-                decoration: InputDecoration(labelText: 'Modelo'),
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Ingrese el modelo' : null,
+                controller: numeroVehiculoCtrl, // Editable solo al crear
+                decoration: InputDecoration(labelText: 'Número de Vehículo'),
+                enabled: widget.vehiculo == null, // Habilitar solo al crear
+                validator: (v) => v == null || v.isEmpty
+                    ? 'Ingrese el número de vehículo'
+                    : null,
               ),
               SizedBox(height: 14),
+              // Placa (editable solo al crear)
               TextFormField(
-                controller: placaCtrl,
+                controller: placaCtrl, // Editable solo al crear
                 decoration: InputDecoration(labelText: 'Placa'),
+                enabled: widget.vehiculo == null, // Habilitar solo al crear
                 validator: (v) =>
                     v == null || v.isEmpty ? 'Ingrese la placa' : null,
               ),
               SizedBox(height: 14),
+              // Año (editable siempre)
               TextFormField(
                 controller: anioCtrl,
                 decoration: InputDecoration(labelText: 'Año'),
+                enabled: widget.vehiculo == null, // Habilitar solo al crear
                 keyboardType: TextInputType.number,
                 validator: (v) {
-                  if (v == null || v.isEmpty) return null; // opcional
+                  if (v == null || v.isEmpty) return null;
                   final n = int.tryParse(v);
                   if (n == null || n < 1900 || n > DateTime.now().year + 1) {
                     return "Año inválido";
@@ -180,6 +211,7 @@ class _EditarVehiculoPantallaState extends State<EditarVehiculoPantalla> {
                 },
               ),
               SizedBox(height: 14),
+              // Estado (editable)
               DropdownButtonFormField<String>(
                 value: estado,
                 items: [
@@ -189,18 +221,23 @@ class _EditarVehiculoPantallaState extends State<EditarVehiculoPantalla> {
                 onChanged: (v) => setState(() => estado = v ?? "activo"),
                 decoration: InputDecoration(labelText: "Estado"),
               ),
-              SizedBox(height: 20),
-              Text(
-                "Chofer asignado:",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              SizedBox(height: 14),
+              // Chofer asignado (editable)
+              DropdownButtonFormField<UsuarioModelo>(
+                value: choferAsignado,
+                items: [
+                  DropdownMenuItem(value: null, child: Text("Sin chofer")),
+                  ...choferesDisponibles.map((chofer) {
+                    return DropdownMenuItem(
+                      value: chofer,
+                      child: Text(chofer.nombre),
+                    );
+                  }).toList(),
+                ],
+                onChanged: (chofer) => setState(() => choferAsignado = chofer),
+                decoration: InputDecoration(labelText: "Asignar Chofer"),
               ),
-              SizedBox(height: 6),
-              choferAsignado != null
-                  ? Text(choferAsignado!.nombre)
-                  : Text(
-                      "No tiene chofer asignado",
-                      style: TextStyle(color: Colors.grey),
-                    ),
+
               SizedBox(height: 20),
               if (error != null)
                 Padding(

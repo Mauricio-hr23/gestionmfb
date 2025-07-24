@@ -32,13 +32,13 @@ class TarjetaPedido extends StatelessWidget {
           child: Icon(Icons.local_shipping, color: Colors.white),
         ),
         title: Text(
-          "Pedido de ${pedido.clienteId}",
+          "Pedido de ${pedido.choferId}",
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Productos: ${pedido.productos.join(", ")}"),
+            Text("Productos: ${pedido.ticketId.join(", ")}"),
             Text(
               "Fecha estimada: ${pedido.fechaEstimada.day}/${pedido.fechaEstimada.month}/${pedido.fechaEstimada.year}",
               style: const TextStyle(fontSize: 13),

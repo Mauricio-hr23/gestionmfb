@@ -1,14 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../modelos/pedido_modelo.dart';
-import 'package:flutter/material.dart'; // <-- DateTimeRange está aquí
+import 'package:flutter/material.dart'; // Importar el paquete material.dart
 
 class PedidoServicio {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final _pedidoRef = FirebaseFirestore.instance.collection('pedidos');
 
+  // Crear un nuevo pedido
   Future<void> crearPedido(PedidoModelo pedido) async {
     await _pedidoRef.add(pedido.toMap());
   }
 
+  // Asignar un pedido a un chofer
   Future<void> asignarPedidoAChofer(String pedidoId, String choferId) async {
     await _pedidoRef.doc(pedidoId).update({
       'choferId': choferId,
@@ -21,14 +24,22 @@ class PedidoServicio {
         .update({'pedido_id': pedidoId});
   }
 
+  // Obtener todos los pedidos en tiempo real
   Stream<List<PedidoModelo>> obtenerPedidos() {
-    return _pedidoRef.snapshots().map(
-      (snapshot) => snapshot.docs
-          .map((doc) => PedidoModelo.fromMap(doc.data(), doc.id))
-          .toList(),
-    );
+    return _pedidoRef.snapshots().map((snapshot) {
+      print(
+        "Pedidos obtenidos: ${snapshot.docs.length}",
+      ); // Añade esta línea para ver cuántos documentos se obtienen
+      return snapshot.docs.map((doc) {
+        return PedidoModelo.fromFirestore(
+          doc.data() as Map<String, dynamic>,
+          doc.id,
+        );
+      }).toList();
+    });
   }
 
+  // Actualizar el estado de un pedido
   Future<void> actualizarEstadoPedido(
     String pedidoId,
     String nuevoEstado,
@@ -36,14 +47,15 @@ class PedidoServicio {
     await _pedidoRef.doc(pedidoId).update({'estado': nuevoEstado});
   }
 
+  // Escuchar un pedido específico por ID
   Stream<PedidoModelo?> escucharPedidoPorId(String pedidoId) {
     return _pedidoRef.doc(pedidoId).snapshots().map((doc) {
       if (!doc.exists) return null;
-      return PedidoModelo.fromMap(doc.data()!, doc.id);
+      return PedidoModelo.fromMap(doc.data()! as Map<String, dynamic>, doc.id);
     });
   }
 
-  // Para el mapa de calor: todos los destinos de los pedidos
+  // Para el mapa de calor: obtener todos los destinos de los pedidos
   Future<List<Map<String, dynamic>>> obtenerDestinosPedidos({
     DateTimeRange? rangoFechas,
     String? choferId,

@@ -73,7 +73,7 @@ class _ListaChoferesPantallaState extends State<ListaChoferesPantalla> {
               .map(
                 (v) => DropdownMenuItem(
                   value: v.id,
-                  child: Text('${v.modelo} - ${v.placa}'),
+                  child: Text('${v.numeroVehiculo} - ${v.placa}'),
                 ),
               )
               .toList(),
@@ -183,7 +183,7 @@ class _ListaChoferesPantallaState extends State<ListaChoferesPantalla> {
                       leading: CircleAvatar(child: Icon(Icons.person)),
                       title: Text(chofer.nombre),
                       subtitle: Text(
-                        'Estado: ${chofer.estado}\nVehículo: ${vehiculo != null ? "${vehiculo.modelo} - ${vehiculo.placa}" : "No asignado"}',
+                        'Estado: ${chofer.estado}\nVehículo: ${vehiculo != null ? "${vehiculo.numeroVehiculo} - ${vehiculo.placa}" : "No asignado"}',
                       ),
                       trailing: IconButton(
                         icon: Icon(Icons.drive_eta),

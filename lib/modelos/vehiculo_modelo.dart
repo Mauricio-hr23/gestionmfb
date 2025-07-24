@@ -1,6 +1,6 @@
 class VehiculoModelo {
   final String id;
-  final String modelo;
+  final String numeroVehiculo;
   final String placa;
   final String? anio;
   final String estado;
@@ -9,7 +9,7 @@ class VehiculoModelo {
 
   VehiculoModelo({
     required this.id,
-    required this.modelo,
+    required this.numeroVehiculo,
     required this.placa,
     this.anio,
     required this.estado,
@@ -20,24 +20,30 @@ class VehiculoModelo {
   factory VehiculoModelo.fromMap(Map<String, dynamic> data, String docId) {
     return VehiculoModelo(
       id: docId,
-      modelo: data['modelo'] ?? '',
+      numeroVehiculo:
+          data['numero_vehiculo'] ??
+          '', // Ajusta a 'numero_vehiculo' si la clave en Firestore es esta
       placa: data['placa'] ?? '',
       anio: data['anio']?.toString(),
       estado: data['estado'] ?? 'activo',
       fotoUrl: data['fotoUrl'],
-      // Acepta ambos para compatibilidad vieja, pero prefiere chofer_id
-      choferId: data['chofer_id'] ?? data['choferId'] ?? '',
+      choferId:
+          data['chofer_id'] ??
+          '', // Asegúrate de que el nombre en Firestore sea 'chofer_id'
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'modelo': modelo,
+      'numero_vehiculo':
+          numeroVehiculo, // Asegúrate de que la clave en Firestore coincida
       'placa': placa,
       'anio': anio,
       'estado': estado,
       'fotoUrl': fotoUrl,
-      'chofer_id': choferId ?? '',
+      'chofer_id':
+          choferId ??
+          '', // Asegúrate de que el nombre en Firestore sea 'chofer_id'
     };
   }
 }

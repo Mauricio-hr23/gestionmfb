@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../perfil/editar_perfil_admin_pantalla.dart';
+import '../chofer/agregar_chofer_pantalla.dart';
 
 class ListaUsuariosPantalla extends StatefulWidget {
   const ListaUsuariosPantalla({super.key});
@@ -16,7 +19,22 @@ class _ListaUsuariosPantallaState extends State<ListaUsuariosPantalla> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Usuarios')),
+      appBar: AppBar(
+        title: Text('Usuarios'),
+        actions: [
+          // Agregar un botón para navegar a la pantalla de agregar chofer
+          IconButton(
+            icon: Icon(Icons.add),
+            onPressed: () {
+              // Navegar a la pantalla AgregarChoferPantalla
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => AgregarChoferPantalla()),
+              );
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(

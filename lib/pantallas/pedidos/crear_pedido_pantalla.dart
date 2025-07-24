@@ -4,6 +4,7 @@ import '../../modelos/pedido_modelo.dart';
 import '../../servicios/pedido_servicio.dart';
 import '../../servicios/ruta_servicio.dart'; // <--- Importante
 import '../mapa/seleccionar_destino_pedido.dart'; // Importa la nueva pantalla
+import '../../servicios/choferes_servicio.dart'; // Asegúrate de tener este servicio para cargar los choferes
 
 class CrearPedidoPantalla extends StatefulWidget {
   const CrearPedidoPantalla({super.key});
@@ -17,7 +18,7 @@ class _CrearPedidoPantallaState extends State<CrearPedidoPantalla> {
   final TextEditingController _productosCtrl = TextEditingController();
   final TextEditingController _fechaCtrl = TextEditingController();
 
-  String? _clienteIdSeleccionado;
+  String? _choferIdSeleccionado; // Cambié a choferId
   DateTime? _fechaEstimada;
 
   LatLng? _ubicacionSeleccionada;
@@ -66,7 +67,7 @@ class _CrearPedidoPantallaState extends State<CrearPedidoPantalla> {
 
   Future<void> _guardarPedido() async {
     if (!_formKey.currentState!.validate() ||
-        _clienteIdSeleccionado == null ||
+        _choferIdSeleccionado == null ||
         _fechaEstimada == null ||
         _ubicacionSeleccionada == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -84,8 +85,9 @@ class _CrearPedidoPantallaState extends State<CrearPedidoPantalla> {
     }
 
     final pedido = PedidoModelo(
-      clienteId: _clienteIdSeleccionado!,
-      productos: _productosCtrl.text.split(','),
+      choferId:
+          _choferIdSeleccionado!, // Aquí guardamos el choferId en lugar de clienteId
+      ticketId: _productosCtrl.text.split(','),
       fechaEstimada: _fechaEstimada!,
       ubicacion: {
         'latitud': _ubicacionSeleccionada!.latitude,
@@ -116,24 +118,38 @@ class _CrearPedidoPantallaState extends State<CrearPedidoPantalla> {
               key: _formKey,
               child: Column(
                 children: [
-                  // CLIENTE
-                  DropdownButtonFormField<String>(
-                    value: _clienteIdSeleccionado,
-                    items: [
-                      DropdownMenuItem(
-                        value: 'cliente1',
-                        child: Text('Cliente 1'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'cliente2',
-                        child: Text('Cliente 2'),
-                      ),
-                    ],
-                    onChanged: (v) =>
-                        setState(() => _clienteIdSeleccionado = v),
-                    decoration: InputDecoration(labelText: 'Cliente'),
-                    validator: (v) =>
-                        v == null ? 'Selecciona un cliente' : null,
+                  // Chofer (usando StreamBuilder para obtener los choferes)
+                  StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: ChoferesServicio().obtenerChoferesConUbicacion(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return CircularProgressIndicator(); // Espera la carga de los datos
+                      }
+
+                      if (snapshot.hasError) {
+                        return Text('Error: ${snapshot.error}');
+                      }
+
+                      final choferes = snapshot.data ?? [];
+
+                      return DropdownButtonFormField<String>(
+                        value: _choferIdSeleccionado,
+                        items: choferes.map((chofer) {
+                          return DropdownMenuItem<String>(
+                            // Especificamos el tipo String
+                            value: chofer['id'], // Usar ID del chofer
+                            child: Text(
+                              chofer['nombre'],
+                            ), // Mostrar el nombre del chofer
+                          );
+                        }).toList(),
+                        onChanged: (v) =>
+                            setState(() => _choferIdSeleccionado = v),
+                        decoration: InputDecoration(labelText: 'Chofer'),
+                        validator: (v) =>
+                            v == null ? 'Selecciona un chofer' : null,
+                      );
+                    },
                   ),
                   SizedBox(height: 16),
                   // UBICACIÓN EN EL MAPA (selección moderna)
@@ -160,12 +176,14 @@ class _CrearPedidoPantallaState extends State<CrearPedidoPantalla> {
                         : null,
                   ),
                   SizedBox(height: 16),
-                  // PRODUCTOS
+                  // ticketId
                   TextFormField(
-                    controller: _productosCtrl,
+                    controller:
+                        _productosCtrl, // Cambiar a un controlador adecuado para tickets
                     decoration: InputDecoration(
-                      labelText: 'Productos (separa por coma)',
-                      hintText: 'ej: cemento, hierro, pintura',
+                      labelText:
+                          'Ticket ID(s) (separa por coma)', // Modificar el texto a algo adecuado para 'ticketId'
+                      hintText: 'ej: ticket1, ticket2, ticket3',
                     ),
                     validator: (v) =>
                         v == null || v.isEmpty ? 'Campo requerido' : null,
