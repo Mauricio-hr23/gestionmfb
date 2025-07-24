@@ -1,156 +1,106 @@
 import 'package:flutter/material.dart';
-import '../../servicios/pedido_servicio.dart';
-import '../../widgets/tarjeta_pedido.dart';
-import '../../modelos/pedido_modelo.dart';
-import 'asignar_pedido_pantalla.dart';
-import 'seguimiento_pedido_pantalla.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ListaPedidosPantalla extends StatefulWidget {
-  const ListaPedidosPantalla({super.key});
-
   @override
-  State<ListaPedidosPantalla> createState() => _ListaPedidosPantallaState();
+  _ListaPedidosPantallaState createState() => _ListaPedidosPantallaState();
 }
 
 class _ListaPedidosPantallaState extends State<ListaPedidosPantalla> {
-  String filtroEstado = 'todos';
-  String busqueda = '';
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // Función para obtener el nombre del cliente o chofer
+  Future<String> _obtenerNombreUsuario(String usuarioId) async {
+    DocumentSnapshot usuarioSnapshot = await _firestore
+        .collection('usuarios')
+        .doc(usuarioId)
+        .get();
+    if (usuarioSnapshot.exists) {
+      return usuarioSnapshot['nombre'] ?? 'Nombre no disponible';
+    } else {
+      return 'Usuario no encontrado';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Lista de Pedidos'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: () => setState(() {}), // Forzar refresco
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // FILTROS
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                DropdownButton<String>(
-                  value: filtroEstado,
-                  items: const [
-                    DropdownMenuItem(value: 'todos', child: Text('Todos')),
-                    DropdownMenuItem(
-                      value: 'pendiente',
-                      child: Text('Pendiente'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'en curso',
-                      child: Text('En Curso'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'completado',
-                      child: Text('Completado'),
-                    ),
-                  ],
-                  onChanged: (valor) {
-                    setState(() {
-                      filtroEstado = valor!;
-                    });
-                  },
-                ),
-                // BÚSQUEDA
-                SizedBox(
-                  width: 180,
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: "Buscar cliente o producto",
-                      prefixIcon: Icon(Icons.search),
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 0,
-                        horizontal: 12,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    onChanged: (valor) {
-                      setState(() {
-                        busqueda = valor.toLowerCase();
-                      });
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // LISTA DE PEDIDOS
-            Expanded(
-              child: StreamBuilder<List<PedidoModelo>>(
-                stream: PedidoServicio().obtenerPedidos(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  final pedidos = snapshot.data ?? [];
+      appBar: AppBar(title: Text('Lista de Pedidos')),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: _firestore.collection('pedidos').snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
 
-                  // FILTRADO por estado y búsqueda
-                  final pedidosFiltrados = pedidos.where((pedido) {
-                    final coincideEstado =
-                        filtroEstado == 'todos' ||
-                        pedido.estado == filtroEstado;
-                    final coincideBusqueda =
-                        busqueda.isEmpty ||
-                        pedido.clienteId.toLowerCase().contains(busqueda) ||
-                        pedido.productos.any(
-                          (p) => p.toLowerCase().contains(busqueda),
-                        );
-                    return coincideEstado && coincideBusqueda;
-                  }).toList();
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(child: Text("No hay pedidos disponibles"));
+          }
 
-                  if (pedidosFiltrados.isEmpty) {
-                    return const Center(
-                      child: Text('No hay pedidos con ese criterio.'),
+          var pedidos = snapshot.data!.docs;
+
+          return ListView.builder(
+            itemCount: pedidos.length,
+            itemBuilder: (context, index) {
+              var pedido = pedidos[index];
+              // Verificación para el campo clienteId
+              var clienteId =
+                  pedido['clienteId'] ??
+                  'Desconocido'; // Valor predeterminado si no existe
+
+              var choferId = pedido['choferId'] ?? 'Desconocido';
+              var estado = pedido['estado'] ?? 'Pendiente';
+
+              // Verificación para el campo fechaEstimada
+              var fechaEstimada = pedido['fechaEstimada'];
+
+              if (fechaEstimada is Timestamp) {
+                fechaEstimada = fechaEstimada.toDate();
+              } else if (fechaEstimada is String) {
+                fechaEstimada = DateTime.parse(fechaEstimada);
+              } else {
+                fechaEstimada = DateTime.now();
+              }
+
+              // Formatear la fecha para que solo se muestre la fecha sin la hora
+              String fechaFormateada =
+                  "${fechaEstimada.day}/${fechaEstimada.month}/${fechaEstimada.year}";
+
+              var ticketsId = pedido['ticketsId'] ?? 'No disponible';
+
+              // Usamos FutureBuilder para obtener el nombre del cliente y chofer
+              return FutureBuilder<List<String>>(
+                future: Future.wait([
+                  _obtenerNombreUsuario(clienteId), // Nombre del cliente
+                  _obtenerNombreUsuario(choferId), // Nombre del chofer
+                ]),
+                builder: (context, snapshotNombre) {
+                  if (snapshotNombre.connectionState ==
+                      ConnectionState.waiting) {
+                    return ListTile(
+                      title: Text('Pedido #$ticketsId'),
+                      subtitle: Text('Cargando datos...'),
                     );
                   }
 
-                  return ListView.builder(
-                    itemCount: pedidosFiltrados.length,
-                    itemBuilder: (context, i) {
-                      final pedido = pedidosFiltrados[i];
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6.0),
-                        child: TarjetaPedido(
-                          pedido: pedido,
-                          onTap: () {
-                            if (pedido.estado.toLowerCase() == 'pendiente') {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      AsignarPedidoPantalla(pedido: pedido),
-                                ),
-                              );
-                            } else {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => SeguimientoPedidoPantalla(
-                                    pedidoId: pedido.id!,
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                      );
+                  String nombreCliente = snapshotNombre.data![0];
+                  String nombreChofer = snapshotNombre.data![1];
+
+                  return ListTile(
+                    title: Text('Pedido #$ticketsId'),
+                    subtitle: Text(
+                      'Cliente: $nombreCliente, Chofer: $nombreChofer\nEstado: $estado',
+                    ),
+                    trailing: Text('Fecha estimada: $fechaFormateada'),
+                    onTap: () {
+                      // Aquí puedes agregar lógica para navegar a un detalle del pedido
                     },
                   );
                 },
-              ),
-            ),
-          ],
-        ),
+              );
+            },
+          );
+        },
       ),
     );
   }

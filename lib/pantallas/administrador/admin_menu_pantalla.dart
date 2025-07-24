@@ -4,6 +4,8 @@ import 'package:gestion_mfb/pantallas/mapa/estadisticas_ubicaciones.dart';
 import 'package:gestion_mfb/pantallas/mapa/mapa_calor_pedidos.dart';
 import 'package:gestion_mfb/pantallas/mapa/analisis_geografico_pedidos.dart';
 import 'package:gestion_mfb/pantallas/mapa/analisis_cuadrantes_pedidos.dart';
+import 'package:gestion_mfb/pantallas/rutas/ruta_pantalla.dart';
+import 'package:gestion_mfb/pantallas/rutas/ver_choferes_con_rutas.dart';
 
 class AdminMenuPantalla extends StatelessWidget {
   const AdminMenuPantalla({super.key});
@@ -104,6 +106,31 @@ class AdminMenuPantalla extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (_) => AnalisisCuadrantesPedidosPantalla(),
+                ),
+              ),
+            ),
+            _AdminMenuCard(
+              color: Colors.green.shade800,
+              icon: Icons.grid_on,
+              title: 'Ver Ruta del Chofer',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => RutaPantalla(
+                    choferId: "123",
+                  ), // Asegúrate de pasar el choferId correcto
+                ),
+              ),
+            ),
+            _AdminMenuCard(
+              color: Colors.green.shade800,
+              icon: Icons.grid_on,
+              title: 'Ver Choferes con Rutas', // Título actualizado
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      VerChoferesConRutasPantalla(), // Llamada a la nueva pantalla
                 ),
               ),
             ),
